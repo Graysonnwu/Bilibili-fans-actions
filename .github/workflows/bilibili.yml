@@ -1,0 +1,46 @@
+# Auto Update Bilibili Fans
+
+name: Bilibili Fans Auto Update
+
+# BJT 03:55 -> 55 19; 23:50 -> 50 15
+on:
+  schedule:
+    - cron: '50 15 * * *'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+        pip install pandas
+        pip install matplotlib==3.3.4
+
+    - name: Update bilibili
+      run: |
+        sh bilibili.sh
+        sh draw.sh
+# sh general.sh
+# B站SESSDATA更新好像改了，现在必须每天都更新，废弃了
+      
+    - name: Commit
+      run: |
+        git config --global user.email 185429663@qq.com
+        git config --global user.name Graysonnwu
+        git add .
+        git commit -m"action:`date`"
+        git pull --rebase
+        
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
