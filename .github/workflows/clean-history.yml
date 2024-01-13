@@ -1,0 +1,39 @@
+name: Clean History
+
+on:
+  workflow_dispatch:
+
+jobs:
+  clean-history:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set up Git
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+    - name: Backup img/ and data/ folders
+      run: |
+        cp -r img/ img_backup/
+        cp -r data/ data_backup/
+
+    - name: Remove img/ and data/ folders from history
+      run: |
+        git filter-branch --force --index-filter 'git rm --cached -r --ignore-unmatch img/ data/' --prune-empty --tag-name-filter cat -- --all
+
+    - name: Restore img/ and data/ folders
+      run: |
+        cp -r img_backup/ img/
+        cp -r data_backup/ data/
+        git add img/ data/
+        git commit -m 'Clean `img/` & `data/` commit history'
+
+    - name: Force push to origin
+      run: |
+        git push origin --force --all
