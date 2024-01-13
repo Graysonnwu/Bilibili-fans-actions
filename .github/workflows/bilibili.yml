@@ -29,13 +29,11 @@ jobs:
       run: |
         sh bilibili.sh
         sh draw.sh
-# sh general.sh
-# B站SESSDATA更新好像改了，现在必须每天都更新，废弃了
       
     - name: Commit
       run: |
-        git config --global user.email 185429663@qq.com
-        git config --global user.name Graysonnwu
+        git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+        git config --global user.name "${GITHUB_ACTOR}"
         git add .
         git commit -m"action:`date`"
         git pull --rebase
