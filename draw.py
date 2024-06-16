@@ -7,7 +7,7 @@ uid = sys.argv[1]
 # uid = 22245854
 
 df = pd.read_csv('data/%s.csv'%uid)
-df = df.iloc[98::-1] # 98意为只截取最近99天的数据，-1意为倒序
+df = df.iloc[199::-1] # 199意为只截取最近200天的数据，-1意为倒序
 df['diff_follower']=df['follower'].diff(1)
 # print(df.head(16))
 
