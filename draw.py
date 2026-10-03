@@ -2,13 +2,26 @@ import pandas as pd
 from matplotlib.ticker import ScalarFormatter
 import matplotlib.pyplot as plt
 import sys
+from pathlib import Path
+
+from bilibili import validate_uid
 
 uid = sys.argv[1]
+validate_uid(uid)
+root = Path(__file__).resolve().parent
 # uid = 22245854
 
-df = pd.read_csv('data/%s.csv'%uid)
-df = df.iloc[199::-1] # 199意为只截取最近200天的数据，-1意为倒序
-df['diff_follower']=df['follower'].diff(1)
+df = pd.read_csv(root / 'data' / f'{uid}.csv')
+df['date'] = pd.to_datetime(df['date'], errors='coerce')
+df['follower'] = pd.to_numeric(df['follower'], errors='coerce')
+df = df.dropna(subset=['date', 'follower'])
+df = df[(df['follower'] >= 0) & (df['follower'] % 1 == 0)]
+df = df.drop_duplicates('date', keep='first').sort_values('date')
+if df.empty:
+    raise ValueError('No valid follower observations')
+df['diff_follower'] = df['follower'].diff() / df['date'].diff().dt.days
+# Compute the earliest visible change from its preceding observation, too.
+df = df.tail(200)
 # print(df.head(16))
 
 plt.figure(figsize=(15,5))
@@ -37,9 +50,9 @@ color_index = inter.searchsorted(df['diff_follower'])
 color_bar = color[color_index]
 
 # 绘图
-plt.bar(df['date'],df['diff_follower'],color=color_bar)
+plt.bar(df['date'].dt.strftime('%Y-%m-%d'),df['diff_follower'],color=color_bar)
 # 底数为2的对数刻度
-plt.yscale('symlog',basey=2)
+plt.yscale('symlog',base=2)
 # Y轴增加两个额外的刻度
 
 # Y轴标签必须完整展示数字
@@ -57,9 +70,11 @@ plt.gca().spines['right'].set_color('none')
 plt.gca().spines['top'].set_color('none')
 plt.grid(color='gray', linestyle='-', linewidth=0.5)
 # 背景透明并输出
-plt.savefig('img/%s_diff_follower.png'%uid, transparent=True)
+(root / 'img').mkdir(exist_ok=True)
+plt.savefig(root / 'img' / f'{uid}_diff_follower.png', transparent=True)
 # plt.savefig('test/%s_diff_follower.png'%uid, transparent=True)
 
 plt.yscale('linear')
-plt.savefig('img/%s_diff_follower_ori.png'%uid, transparent=True)
+plt.savefig(root / 'img' / f'{uid}_diff_follower_ori.png', transparent=True)
+plt.close()
 # plt.savefig('test/%s_diff_follower_ori.png'%uid, transparent=True)
